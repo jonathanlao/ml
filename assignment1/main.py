@@ -1,30 +1,199 @@
 import numpy as np
 import os.path
+import pandas as pd
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.svm import LinearSVC
+from sklearn.svm import SVC
 from sklearn import neural_network
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import plot_confusion_matrix
+from sklearn.metrics import f1_score
+from sklearn.datasets import make_classification
+from sklearn.datasets import make_gaussian_quantiles
+from sklearn.model_selection import learning_curve
 import matplotlib.pyplot as plt
 
 RANDOM_STATE = 42
 ROOT = os.path.abspath(os.path.dirname(__file__))
+FIGURE = 0
 
-def load_data(dataset, outcome_last_col):
-    path = os.path.join(ROOT, "../data/"+ dataset +".csv")
-    data = np.genfromtxt(path, delimiter=',')
-    if outcome_last_col:
-        features = data[:,0:-1]
-        labels = data[:,-1]
-    else:
-        features = data[:,1:]
-        labels = data[:,0]
+# def create_wdbc_dataset(dataset):
+#     path = os.path.join(ROOT, "../data/"+ dataset +".csv")
+#     data = np.genfromtxt(path, delimiter=',')
+    
+#     features = data[:,2:]
+#     labels = data[:,1]
+
+#     x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=150, random_state=RANDOM_STATE)
+
+#     np.savetxt("../data/wdbc_train_features.csv", x_train, delimiter=",", fmt="%1.5f")
+#     np.savetxt("../data/wdbc_train_labels.csv", y_train, delimiter=",", fmt="%d")
+#     np.savetxt("../data/wdbc_test_features.csv", x_test, delimiter=",", fmt="%1.5f")
+#     np.savetxt("../data/wdbc_test_labels.csv", y_test, delimiter=",", fmt="%d")
+#     return
+
+
+# def create_wine_dataset(dataset):
+#     path = os.path.join(ROOT, "../data/"+ dataset +".csv")
+#     data = np.genfromtxt(path, delimiter=';')
+    
+#     features = data[1:,:-1]
+#     labels = data[1:,-1]
+
+#     # unique, counts = np.unique(labels, return_counts=True)
+#     # print(dict(zip(unique, counts)))
+
+#     labels[labels < 5] = 0
+#     labels[labels == 5] = 1
+#     labels[labels == 6] = 1
+#     labels[labels > 5] = 2
+
+#     # unique, counts = np.unique(labels, return_counts=True)
+#     # print(dict(zip(unique, counts)))
+
+#     # random subset of features
+#     features = features[:,[0,3,4,6,7,10]]
+
+#     x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=150, random_state=RANDOM_STATE)
+
+#     # unique, counts = np.unique(y_test, return_counts=True)
+#     # print(dict(zip(unique, counts)))
+
+#     np.savetxt("../data/wine_train_features.csv", x_train, delimiter=",", fmt="%1.5f")
+#     np.savetxt("../data/wine_train_labels.csv", y_train, delimiter=",", fmt="%d")
+#     np.savetxt("../data/wine_test_features.csv", x_test, delimiter=",", fmt="%1.5f")
+#     np.savetxt("../data/wine_test_labels.csv", y_test, delimiter=",", fmt="%d")
+
+    # return features, labels
+
+
+def create_datasets():
+    x1, y1 = make_gaussian_quantiles(mean = None, cov = 1.0, n_samples = 1000, n_features = 15, n_classes = 2, random_state = RANDOM_STATE) 
+    # x1, y1 = make_classification(n_samples=800, n_features=18, n_informative=12, n_redundant=4, n_repeated=2, n_classes=2, class_sep=0.5, shuffle=True, random_state=RANDOM_STATE)
+    x2, y2 = make_classification(n_samples=3000, n_features=8, n_informative=6, n_redundant=1, n_repeated=1, n_classes=2, class_sep=0.5, shuffle=True, random_state=RANDOM_STATE)
+
+    print(x1[0])
+
+    x1_train, x1_test, y1_train, y1_test = train_test_split(x1, y1, test_size=200, random_state=RANDOM_STATE)
+    np.savetxt("../data/dataset1_train_features.csv", x1_train, delimiter=",", fmt="%1.8f")
+    np.savetxt("../data/dataset1_train_labels.csv", y1_train, delimiter=",", fmt="%d")
+    np.savetxt("../data/dataset1_test_features.csv", x1_test, delimiter=",", fmt="%1.8f")
+    np.savetxt("../data/dataset1_test_labels.csv", y1_test, delimiter=",", fmt="%d")
+
+    x2_train, x2_test, y2_train, y2_test = train_test_split(x2, y2, test_size=200, random_state=RANDOM_STATE)
+    np.savetxt("../data/dataset2_train_features.csv", x2_train, delimiter=",", fmt="%1.8f")
+    np.savetxt("../data/dataset2_train_labels.csv", y2_train, delimiter=",", fmt="%d")
+    np.savetxt("../data/dataset2_test_features.csv", x2_test, delimiter=",", fmt="%1.8f")
+    np.savetxt("../data/dataset2_test_labels.csv", y2_test, delimiter=",", fmt="%d")
+    return
+
+
+def load_data(dataset):
+    x_path = os.path.join(ROOT, "../data/"+ dataset + "_train_features.csv")
+    features = np.genfromtxt(x_path, delimiter=',')
+
+    y_path = x_path = os.path.join(ROOT, "../data/"+ dataset + "_train_labels.csv")
+    labels = np.genfromtxt(y_path, delimiter=',')
 
     return features, labels
+
+# Taken from sklearn documentation:
+# https://scikit-learn.org/stable/auto_examples/model_selection/plot_learning_curve.html
+def plot_learning_curve(estimator, title, X, y, axes=None, ylim=(0.4, 1.01), cv=None,
+                        n_jobs=None, train_sizes=np.linspace(.1, 1.0, 5)):
+
+    if axes is None:
+        _, axes = plt.subplots(1, 1, figsize=(5, 5))
+
+    axes.set_title(title)
+    if ylim is not None:
+        axes.set_ylim(*ylim)
+    axes.set_xlabel("Training examples")
+    axes.set_ylabel("Score")
+
+    train_sizes, train_scores, test_scores, fit_times, _ = \
+        learning_curve(estimator, X, y, cv=cv, n_jobs=n_jobs,
+                       train_sizes=train_sizes,
+                       return_times=True)
+    train_scores_mean = np.mean(train_scores, axis=1)
+    train_scores_std = np.std(train_scores, axis=1)
+    test_scores_mean = np.mean(test_scores, axis=1)
+    test_scores_std = np.std(test_scores, axis=1)
+    fit_times_mean = np.mean(fit_times, axis=1)
+    fit_times_std = np.std(fit_times, axis=1)
+
+    # Plot learning curve
+    axes.grid()
+    axes.fill_between(train_sizes, train_scores_mean - train_scores_std,
+                         train_scores_mean + train_scores_std, alpha=0.1,
+                         color="r")
+    axes.fill_between(train_sizes, test_scores_mean - test_scores_std,
+                         test_scores_mean + test_scores_std, alpha=0.1,
+                         color="g")
+    axes.plot(train_sizes, train_scores_mean, 'o-', color="r",
+                 label="Training score")
+    axes.plot(train_sizes, test_scores_mean, 'o-', color="g",
+                 label="Cross-validation score")
+    axes.legend(loc="best")
+
+    # # Plot n_samples vs fit_times
+    # axes[1].grid()
+    # axes[1].plot(train_sizes, fit_times_mean, 'o-')
+    # axes[1].fill_between(train_sizes, fit_times_mean - fit_times_std,
+    #                      fit_times_mean + fit_times_std, alpha=0.1)
+    # axes[1].set_xlabel("Training examples")
+    # axes[1].set_ylabel("fit_times")
+    # axes[1].set_title("Scalability of the model")
+
+    # # Plot fit_time vs score
+    # axes[2].grid()
+    # axes[2].plot(fit_times_mean, test_scores_mean, 'o-')
+    # axes[2].fill_between(fit_times_mean, test_scores_mean - test_scores_std,
+    #                      test_scores_mean + test_scores_std, alpha=0.1)
+    # axes[2].set_xlabel("fit_times")
+    # axes[2].set_ylabel("Score")
+    # axes[2].set_title("Performance of the model")
+
+    plt.savefig('output/'+title)
+    plt.close()
+
+    return plt
+
+from sklearn.model_selection import validation_curve
+def plot_model_complexity_curve(model, title, features, labels, x_label, param_name, param_range):
+
+    train_scores, test_scores = validation_curve(
+        model, features, labels, param_name=param_name, param_range=param_range,
+        scoring="accuracy")
+
+    train_scores_mean = np.mean(train_scores, axis=1)
+    train_scores_std = np.std(train_scores, axis=1)
+    test_scores_mean = np.mean(test_scores, axis=1)
+    test_scores_std = np.std(test_scores, axis=1)
+
+    plt.title(title)
+    plt.xlabel(x_label)
+    plt.ylabel("Accuracy")
+    plt.ylim(0.4, 1.01)
+    lw = 2
+
+    plt.plot(param_range, train_scores_mean, label="Training score",
+                color="darkorange", lw=lw)
+    plt.fill_between(param_range, train_scores_mean - train_scores_std,
+                    train_scores_mean + train_scores_std, alpha=0.2,
+                    color="darkorange", lw=lw)
+    plt.plot(param_range, test_scores_mean, label="Cross-validation score",
+                color="navy", lw=lw)
+    plt.fill_between(param_range, test_scores_mean - test_scores_std,
+                    test_scores_mean + test_scores_std, alpha=0.2,
+                    color="navy", lw=lw)
+    plt.legend(loc="best")
+
+    plt.savefig('output/'+title)
+    plt.close()
 
 
 def classify(x_train, x_test, y_train, y_test, dataset, clf, clf_name):
@@ -33,9 +202,9 @@ def classify(x_train, x_test, y_train, y_test, dataset, clf, clf_name):
     final_score = clf.score(x_test, y_test)
     matrix = confusion_matrix(y_test, pred)
     
-    print(y_test)
+    # print(y_test)
     print(final_score)
-    print(matrix)
+    # print(matrix)
     if dataset == 'wine':
             disp = plot_confusion_matrix(clf, x_test, y_test,
                                             display_labels=['Cultivar 1', 'Cultivar 2', 'Cultivar 3'],
@@ -55,54 +224,77 @@ def classify(x_train, x_test, y_train, y_test, dataset, clf, clf_name):
         plt.savefig(clf_name+'_Diabetes.png')
 
 
-def decision_tree(x_train, x_test, y_train, y_test, dataset):
-    dt = DecisionTreeClassifier()
-    param_grid = {'max_depth': np.arange(1, 10)}
-    gscv = GridSearchCV(dt, param_grid, cv=5)
-    gscv.fit(x_train, y_train)
-    depth = gscv.best_params_['max_depth']
-    # print(depth)
-
-    dt = DecisionTreeClassifier(random_state=RANDOM_STATE, max_depth=depth)
-    classify(x_train, x_test, y_train, y_test, dataset, dt, 'DT')
-
-
 def neural_network(x_train, x_test, y_train, y_test, dataset):
     print('hello!')
 
 
 def svm(x_train, x_test, y_train, y_test, dataset):
-    svm = LinearSVC(random_state=RANDOM_STATE)
+    svm = SVC(kernel='rbf')
     classify(x_train, x_test, y_train, y_test, dataset, svm, 'SVM')
 
 
 def knn(x_train, x_test, y_train, y_test, dataset):
-    knn = KNeighborsClassifier()
-    param_grid = {'n_neighbors': np.arange(1, 10)}
-    knn_gscv = GridSearchCV(knn, param_grid, cv=5)
-    knn_gscv.fit(x_train, y_train)
-    k = knn_gscv.best_params_['n_neighbors']
+    # knn = KNeighborsClassifier()
+    # param_grid = {'n_neighbors': np.arange(1, 10)}
+    # knn_gscv = GridSearchCV(knn, param_grid, cv=5)
+
+    # knn_gscv.fit(x_train, y_train)
+    # k = knn_gscv.best_params_['n_neighbors']
     # print(k)
 
-    knn = KNeighborsClassifier(n_neighbors=k)
+    knn = KNeighborsClassifier(n_neighbors=22)
     classify(x_train, x_test, y_train, y_test, dataset, knn, 'KNN')
 
 
+def decision_tree_alpha(features, labels):
+    dt = DecisionTreeClassifier(random_state=RANDOM_STATE, max_depth=3)
+    plot_learning_curve(dt, 'Alpha - Decision Tree, depth=3', features, labels, train_sizes=(10, 20, 50, 100, 200, 300, 400, 500, 600))
+    plot_model_complexity_curve(dt, 'Alpha - Decision Tree, Model Complexity', features, labels, 'Max Depth', 'max_depth', (1,3,5,10,20,50,100))
+
+    dt = DecisionTreeClassifier(random_state=RANDOM_STATE, max_depth=25)
+    plot_learning_curve(dt, 'Alpha - Decision Tree, depth=25', features, labels, train_sizes=(10, 20, 50, 100, 200, 300, 400, 500, 600))
+
+    # x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=RANDOM_STATE)
+    # classify(x_train, x_test, y_train, y_test, dataset, dt, 'DT')
+
+
+def decision_tree_beta(features, labels):
+    dt = DecisionTreeClassifier(random_state=RANDOM_STATE, max_depth=3)
+    plot_learning_curve(dt, 'Beta - Decision Tree, depth=3', features, labels, train_sizes=(10, 20, 50, 100, 200, 400, 600, 1000, 1500, 2000, 2200))
+    plot_model_complexity_curve(dt, 'Beta - Decision Tree, Model Complexity', features, labels, 'Max Depth', 'max_depth', (1,3,5,10,20,50,100))
+
+    dt = DecisionTreeClassifier(random_state=RANDOM_STATE, max_depth=10)
+    plot_learning_curve(dt, 'Beta - Decision Tree, depth=10', features, labels, train_sizes=(10, 20, 50, 100, 200, 400, 600, 1000, 1500, 2000, 2200))
+
+    # x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=RANDOM_STATE)
+    # classify(x_train, x_test, y_train, y_test, dataset, dt, 'DT')
+
+
 def run_experiments(features, labels, dataset):
+    # scaler = preprocessing.StandardScaler().fit(features)
+    # features = scaler.transform(features)
+
     x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=RANDOM_STATE)
 
-    scaler = preprocessing.StandardScaler().fit(x_train)
-    x_train = scaler.transform(x_train)
-    x_test = scaler.transform(x_test)
-
-    # decision_tree(x_train, x_test, y_train, y_test, dataset)
-    svm(x_train, x_test, y_train, y_test, dataset)
+    decision_tree_alpha(features, labels)
+    # svm(x_train, x_test, y_train, y_test, dataset)
     # knn(x_train, x_test, y_train, y_test, dataset)
     
     
 if __name__ == "__main__":
-    wine_features, wine_labels = load_data('wine', False)
-    diabetes_features, diabetes_labels = load_data('diabetes', True)
-    run_experiments(wine_features, wine_labels, 'wine')
-    run_experiments(diabetes_features, diabetes_labels, 'diabetes')
+    # create_wdbc_dataset('wdbc')
+    # create_wine_dataset('wine')
+    # create_datasets()
+
+    # wdbc_features, wdbc_labels = load_data('wdbc')
+    # wine_features, wine_labels = load_data('wine')
+
+    # run_experiments(wine_features, wine_labels, 'wine')
+    # run_experiments(wdbc_features, wdbc_labels, 'wdbc')
+    
+    features1, labels1 = load_data('dataset1')
+    decision_tree_alpha(features1, labels1)
+
+    features2, labels2 = load_data('dataset2')
+    decision_tree_beta(features2, labels2)
 
