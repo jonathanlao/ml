@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
+from sklearn.neural_network import MLPClassifier
 from sklearn import neural_network
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import GridSearchCV
@@ -14,6 +15,7 @@ from sklearn.metrics import f1_score
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_gaussian_quantiles
 from sklearn.model_selection import learning_curve
+from sklearn.ensemble import AdaBoostClassifier
 import matplotlib.pyplot as plt
 
 RANDOM_STATE = 42
@@ -125,6 +127,8 @@ def plot_learning_curve(estimator, title, X, y, axes=None, ylim=(0.4, 1.01), cv=
     fit_times_mean = np.mean(fit_times, axis=1)
     fit_times_std = np.std(fit_times, axis=1)
 
+
+
     # Plot learning curve
     axes.grid()
     axes.fill_between(train_sizes, train_scores_mean - train_scores_std,
@@ -157,13 +161,13 @@ def plot_learning_curve(estimator, title, X, y, axes=None, ylim=(0.4, 1.01), cv=
     # axes[2].set_ylabel("Score")
     # axes[2].set_title("Performance of the model")
 
-    plt.savefig('output/'+title)
+    plt.savefig('output/'+title+'.png')
     plt.close()
 
     return plt
 
 from sklearn.model_selection import validation_curve
-def plot_model_complexity_curve(model, title, features, labels, x_label, param_name, param_range):
+def plot_model_complexity_curve(model, title, features, labels, x_label, param_name, param_range, optional_param_range=None):
 
     train_scores, test_scores = validation_curve(
         model, features, labels, param_name=param_name, param_range=param_range,
@@ -179,6 +183,9 @@ def plot_model_complexity_curve(model, title, features, labels, x_label, param_n
     plt.ylabel("Accuracy")
     plt.ylim(0.4, 1.01)
     lw = 2
+
+    if optional_param_range:
+        param_range = optional_param_range
 
     plt.plot(param_range, train_scores_mean, label="Training score",
                 color="darkorange", lw=lw)
@@ -224,26 +231,73 @@ def classify(x_train, x_test, y_train, y_test, dataset, clf, clf_name):
         plt.savefig(clf_name+'_Diabetes.png')
 
 
-def neural_network(x_train, x_test, y_train, y_test, dataset):
-    print('hello!')
+def svm_alpha(features, labels):
+    svm = SVC(kernel='linear', random_state = RANDOM_STATE)
+    plot_learning_curve(svm, 'Alpha - Linear SVM, C=1.0', features, labels, train_sizes=(10, 20, 50, 100, 200, 300, 400, 500, 600))
+    plot_model_complexity_curve(svm, 'Alpha - Linear SVM Model Complexity', features, labels, 'Regularization', 'C', (1,2,3,5,10,50))
+
+    svm = SVC(kernel='rbf', random_state = RANDOM_STATE)
+    plot_model_complexity_curve(svm, 'Alpha - Radial SVM Model Complexity', features, labels, 'Regularization', 'C', (1,2,3,5,10,50))
+    plot_learning_curve(svm, 'Alpha - Radial SVM, C=1.0', features, labels, train_sizes=(10, 20, 50, 100, 200, 300, 400, 500, 600))
+
+    # classify(x_train, x_test, y_train, y_test, dataset, svm, 'SVM')
 
 
-def svm(x_train, x_test, y_train, y_test, dataset):
-    svm = SVC(kernel='rbf')
-    classify(x_train, x_test, y_train, y_test, dataset, svm, 'SVM')
+def boost_alpha(features, labels):
+    dt = DecisionTreeClassifier(random_state=RANDOM_STATE, max_depth=25)
+    boost = AdaBoostClassifier(dt, random_state = RANDOM_STATE)
+    plot_learning_curve(boost, 'Alpha - AdaBoost', features, labels, train_sizes=(10, 20, 50, 100, 200, 300, 400, 500, 600))
+    plot_model_complexity_curve(boost, 'Alpha - AdaBoost, Model complexity', features, labels, 'Number of Estimators', 'n_estimators', (5,10,20,40,60,80))
+
+    dt = DecisionTreeClassifier(random_state=RANDOM_STATE)
+    boost = AdaBoostClassifier(dt, random_state = RANDOM_STATE)
+    plot_model_complexity_curve(boost, 'Alpha - AdaBoost, Model complexity, Depth=1', features, labels, 'Number of Estimators', 'n_estimators', (5,10,20,40,60,80))
 
 
-def knn(x_train, x_test, y_train, y_test, dataset):
-    # knn = KNeighborsClassifier()
-    # param_grid = {'n_neighbors': np.arange(1, 10)}
-    # knn_gscv = GridSearchCV(knn, param_grid, cv=5)
+def boost_beta(features, labels):
+    dt = DecisionTreeClassifier(random_state=RANDOM_STATE, max_depth=10)
+    boost = AdaBoostClassifier(dt, random_state = RANDOM_STATE)
+    plot_learning_curve(boost, 'Beta - AdaBoost', features, labels, train_sizes=(20, 50, 100, 200, 400, 600, 1000, 1500, 2000, 2200))
+    plot_model_complexity_curve(boost, 'Beta - AdaBoost, Model complexity', features, labels, 'Number of Estimators', 'n_estimators', (5,10,20,40,60,80))
 
-    # knn_gscv.fit(x_train, y_train)
-    # k = knn_gscv.best_params_['n_neighbors']
-    # print(k)
+    # oddly, my boosts got less accurate as we decreased depth (perhaps my dt at 10 was too low? theoretically, boosts can afford to have
+    # less complex trees)
+    dt = DecisionTreeClassifier(random_state=RANDOM_STATE, max_depth=5)
+    boost = AdaBoostClassifier(dt, random_state = RANDOM_STATE)
+    plot_model_complexity_curve(boost, 'Beta - AdaBoost, Model complexity, Depth=5', features, labels, 'Number of Estimators', 'n_estimators', (5,10,20,40,60,80))
 
-    knn = KNeighborsClassifier(n_neighbors=22)
-    classify(x_train, x_test, y_train, y_test, dataset, knn, 'KNN')
+
+def svm_beta(features, labels):
+    svm = SVC(kernel='linear', random_state = RANDOM_STATE)
+    plot_learning_curve(svm, 'Beta - Linear SVM, C=1.0', features, labels, train_sizes=(20, 50, 100, 200, 400, 600, 1000, 1500, 2000, 2200))
+    plot_model_complexity_curve(svm, 'Beta - Linear SVM Model Complexity', features, labels, 'Regularization', 'C', (1,2,3,5,10,50))
+
+    svm = SVC(kernel='rbf', random_state = RANDOM_STATE)
+    plot_model_complexity_curve(svm, 'Beta - Radial SVM Model Complexity', features, labels, 'Regularization', 'C', (1,2,3,5,10,50))
+    plot_learning_curve(svm, 'Beta - Radial SVM, C=1.0', features, labels, train_sizes=(20, 50, 100, 200, 400, 600, 1000, 1500, 2000, 2200))
+
+
+
+def knn_alpha(features, labels):
+    knn = KNeighborsClassifier(n_neighbors=3, random_state = RANDOM_STATE)
+    plot_learning_curve(knn, 'Alpha - KNN, k=3', features, labels, train_sizes=(10, 20, 50, 100, 200, 300, 400, 500, 600))
+    plot_model_complexity_curve(knn, 'Alpha - KNN Model Complexity', features, labels, 'K', 'n_neighbors', (1,3,5,10,20,30))
+
+    knn = KNeighborsClassifier(n_neighbors=1, random_state = RANDOM_STATE)
+    plot_learning_curve(knn, 'Alpha - KNN, k=1', features, labels, train_sizes=(10, 20, 50, 100, 200, 300, 400, 500, 600))
+
+    # knn = KNeighborsClassifier(n_neighbors=1, metric='euclidean')
+    # plot_learning_curve(knn, 'Alpha - KNN, k=1', features, labels, train_sizes=(10, 20, 50, 100, 200, 300, 400, 500, 600))
+
+
+
+def knn_beta(features, labels):
+    knn = KNeighborsClassifier(n_neighbors=3, random_state = RANDOM_STATE)
+    plot_learning_curve(knn, 'Beta - KNN, k=3', features, labels, train_sizes=(10, 20, 50, 100, 200, 400, 600, 1000, 1500, 2000, 2200))
+    plot_model_complexity_curve(knn, 'Beta - KNN Model Complexity', features, labels, 'K', 'n_neighbors', (1,3,5,10,20,30))
+
+    knn = KNeighborsClassifier(n_neighbors=5, random_state = RANDOM_STATE)
+    plot_learning_curve(knn, 'Beta - KNN, k=5', features, labels, train_sizes=(10, 20, 50, 100, 200, 400, 600, 1000, 1500, 2000, 2200))
 
 
 def decision_tree_alpha(features, labels):
@@ -253,6 +307,8 @@ def decision_tree_alpha(features, labels):
 
     dt = DecisionTreeClassifier(random_state=RANDOM_STATE, max_depth=25)
     plot_learning_curve(dt, 'Alpha - Decision Tree, depth=25', features, labels, train_sizes=(10, 20, 50, 100, 200, 300, 400, 500, 600))
+
+    # plot_model_complexity_curve(dt, 'Alpha - Decision Tree, Model Complexity, min leaves', features, labels, 'Min Leaves', 'min_samples_leaf', (1,2,3,5,7,10))
 
     # x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=RANDOM_STATE)
     # classify(x_train, x_test, y_train, y_test, dataset, dt, 'DT')
@@ -266,8 +322,59 @@ def decision_tree_beta(features, labels):
     dt = DecisionTreeClassifier(random_state=RANDOM_STATE, max_depth=10)
     plot_learning_curve(dt, 'Beta - Decision Tree, depth=10', features, labels, train_sizes=(10, 20, 50, 100, 200, 400, 600, 1000, 1500, 2000, 2200))
 
+    # plot_model_complexity_curve(dt, 'Beta - Decision Tree, Model Complexity, min leaves', features, labels, 'Min Leaves', 'min_samples_leaf', (1,2,3,5,7,10))
+
     # x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=RANDOM_STATE)
     # classify(x_train, x_test, y_train, y_test, dataset, dt, 'DT')
+
+
+def neural_network_alpha(features, labels):
+    # 10 units, iterations
+    nn = MLPClassifier((10,), random_state = RANDOM_STATE)
+    # plot_model_complexity_curve(nn, 'Alpha - NN', features, labels, 'Iterations', 'max_iter', (10,20,30,50,100,200,300,400,600,800,1000))
+
+    #10 units, 600 iterations, learning curve
+    # nn = MLPClassifier((10,), max_iter=600, random_state = RANDOM_STATE)
+    # plot_learning_curve(nn, 'Alpha - NN , 1 layer 10 units', features, labels, train_sizes=(10, 20, 50, 100, 200, 300, 400, 500, 600))
+
+    # 600 iterations, adjust num hidden units
+    # nn = MLPClassifier(max_iter=600, random_state = RANDOM_STATE)
+    # plot_model_complexity_curve(nn, 'Alpha - NN 1 layer, Hidden Units', features, labels, 'Hidden Units', 'hidden_layer_sizes', 
+    #     ((10,), (20,), (30,), (50,), (60,), (70,), (80,), (100,)), (10,20,30,50, 60, 70, 80, 100))
+    
+    # 600 iterations, adjust number of layers, clearly overfitting
+    # nn = MLPClassifier(max_iter=600, random_state = RANDOM_STATE)
+    # plot_model_complexity_curve(nn, 'Alpha - NN 10 units per layer', features, labels, 'Number of layers', 'hidden_layer_sizes', 
+    #     ((10,), (10,10,), (10,10,10,), (10,10,10,10), (10,10,10,10,10)), (1,2,3,4,5))
+
+    # above was bias, now try reducing variance
+    # nn = MLPClassifier(max_iter=600, hidden_layer_sizes=(60,), random_state = RANDOM_STATE)
+    # plot_model_complexity_curve(nn, 'Alpha - NN 1 layer, 60 units', features, labels, 'Reglurization', 'alpha', (0.0001, 0.0005, 0.001, 0.005, 0.01, 0.02))
+
+
+def neural_network_beta(features, labels):
+    # 10 units, iterations
+    # nn = MLPClassifier((10,), random_state = RANDOM_STATE)
+    # plot_model_complexity_curve(nn, 'Beta - NN', features, labels, 'Iterations', 'max_iter', (10,20,30,50,100,200,300,400,600,800,1000))
+
+    #10 units, 400 iterations, learning curve
+    # nn = MLPClassifier((10,), max_iter=400, random_state = RANDOM_STATE)
+    # plot_learning_curve(nn, 'Beta - NN , 1 layer 10 units', features, labels, train_sizes=(10, 20, 50, 100, 200, 400, 600, 1000, 1500, 2000, 2200))
+
+    # 400 iterations, adjust num hidden units
+    # nn = MLPClassifier(max_iter=400, random_state = RANDOM_STATE)
+    # plot_model_complexity_curve(nn, 'Beta - NN 1 layer, Hidden Units', features, labels, 'Hidden Units', 'hidden_layer_sizes', 
+    #     ((10,), (20,), (30,), (50,), (60,), (70,), (80,), (100,)), (10,20,30,50, 60, 70, 80, 100))
+    
+    # 400 iterations,again increases variance and overfitting
+    # nn = MLPClassifier(max_iter=400, random_state = RANDOM_STATE)
+    # plot_model_complexity_curve(nn, 'Beta - NN 10 units per layer', features, labels, 'Number of layers', 'hidden_layer_sizes', 
+    #     ((10,), (10,10,), (10,10,10,), (10,10,10,10), (10,10,10,10,10)), (1,2,3,4,5))
+
+    # above was bias, now try reducing variance
+    # nn = MLPClassifier(max_iter=400, hidden_layer_sizes=(30,), random_state = RANDOM_STATE)
+    # plot_model_complexity_curve(nn, 'Beta - NN 1 layer, 60 units', features, labels, 'Reglurization', 'alpha', (0.0001, 0.0005, 0.001, 0.005, 0.01, 0.02))
+
 
 
 def run_experiments(features, labels, dataset):
@@ -293,8 +400,16 @@ if __name__ == "__main__":
     # run_experiments(wdbc_features, wdbc_labels, 'wdbc')
     
     features1, labels1 = load_data('dataset1')
-    decision_tree_alpha(features1, labels1)
+    # decision_tree_alpha(features1, labels1)
+    # knn_alpha(features1, labels1)
+    # svm_alpha(features1, labels1)
+    # neural_network_alpha(features1, labels1)
+    # boost_alpha(features1, labels1)
 
     features2, labels2 = load_data('dataset2')
-    decision_tree_beta(features2, labels2)
+    # decision_tree_beta(features2, labels2)
+    # knn_beta(features2, labels2)
+    # svm_beta(features2, labels2)
+    neural_network_beta(features2, labels2)
+    #boost_beta(features2, labels2)
 
