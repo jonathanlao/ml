@@ -165,6 +165,9 @@ def plot_learning_curve(estimator, title, X, y, axes=None, ylim=(0.4, 1.01), cv=
 
     return plt
 
+# taken from sklearn documentaiton
+# https://scikit-learn.org/stable/auto_examples/model_selection/plot_validation_curve.html#sphx-glr-auto-examples-model-selection-plot-validation-curve-py
+
 from sklearn.model_selection import validation_curve
 def plot_model_complexity_curve(model, title, features, labels, x_label, param_name, param_range, optional_param_range=None):
 
