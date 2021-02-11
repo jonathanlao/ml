@@ -18,6 +18,7 @@ from sklearn.model_selection import learning_curve
 from sklearn.ensemble import AdaBoostClassifier
 import matplotlib.pyplot as plt
 from sklearn.model_selection import cross_validate
+import time
 
 RANDOM_STATE = 42
 ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -92,11 +93,11 @@ def create_datasets():
     return
 
 
-def load_data(dataset):
-    x_path = os.path.join(ROOT, "../data/"+ dataset + "_train_features.csv")
+def load_data(dataset, datatype):
+    x_path = os.path.join(ROOT, "../data/"+ dataset + "_"+ datatype +"_features.csv")
     features = np.genfromtxt(x_path, delimiter=',')
 
-    y_path = x_path = os.path.join(ROOT, "../data/"+ dataset + "_train_labels.csv")
+    y_path = x_path = os.path.join(ROOT, "../data/"+ dataset + "_"+datatype+"_labels.csv")
     labels = np.genfromtxt(y_path, delimiter=',')
 
     return features, labels
@@ -291,9 +292,9 @@ def boost_alpha(features, labels):
     dt = DecisionTreeClassifier(random_state=RANDOM_STATE, max_depth=8)
     boost = AdaBoostClassifier(dt, random_state = RANDOM_STATE)
     plot_model_complexity_curve(boost, 'Alpha - AdaBoost Model Complexity, depth=8', features, labels, 'Number of Estimators', 
-        'n_estimators', (30,60,90,120,150,180, 200, 230))
+        'n_estimators', range(10,151,10))
 
-    plot_learning_curve(boost, 'Alpha - AdaBoost Learning Curve', features, labels, train_sizes=(10, 20, 50, 100, 200, 300, 400, 500, 600))
+    # plot_learning_curve(boost, 'Alpha - AdaBoost Learning Curve', features, labels, train_sizes=(10, 20, 50, 100, 200, 300, 400, 500, 600))
 
 
 def boost_beta(features, labels):
@@ -394,41 +395,76 @@ def neural_network_beta(features, labels):
         train_sizes=(10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 800, 1000, 1250, 1500, 1750, 2000, 2200))
 
 
-
-# def run_experiments(features, labels, dataset):
-#     # scaler = preprocessing.StandardScaler().fit(features)
-#     # features = scaler.transform(features)
-
-#     x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=RANDOM_STATE)
-
-#     decision_tree_alpha(features, labels)
-#     # svm(x_train, x_test, y_train, y_test, dataset)
-#     # knn(x_train, x_test, y_train, y_test, dataset)
+def experiment(x_train, y_train, x_test, y_test, clf, name):
+    start = time.time()
+    clf.fit(x_train, y_train)
+    end = time.time()
+    print(name,' Fit Time = ', end-start)
+    start = time.time()
+    pred = clf.predict(x_test)
+    end = time.time()
+    print(name, ' Predict Time = ', end-start)
+    final_score = clf.score(x_test, y_test)
+    print(name, ' Score', final_score)
     
-    
-if __name__ == "__main__":
-    # create_wdbc_dataset('wdbc')
-    # create_wine_dataset('wine')
-    # 
+    # matrix = confusion_matrix(y_test, pred)
 
-    # wdbc_features, wdbc_labels = load_data('wdbc')
-    # wine_features, wine_labels = load_data('wine')
 
-    # run_experiments(wine_features, wine_labels, 'wine')
-    # run_experiments(wdbc_features, wdbc_labels, 'wdbc')
+def final_results_alpha(x_train, y_train):
+    x_test, y_test = load_data('dataset1', 'test')
+
+    clf = DecisionTreeClassifier(random_state=RANDOM_STATE, max_depth=8, min_samples_leaf=20)
+    experiment(x_train, y_train, x_test, y_test, clf, 'DT')
+
+    dt = DecisionTreeClassifier(random_state=RANDOM_STATE, max_depth=8)
+    clf = AdaBoostClassifier(dt, random_state = RANDOM_STATE)
+    experiment(x_train, y_train, x_test, y_test, clf, 'Boost')
+
+    clf = MLPClassifier((110,110), max_iter=150, random_state = RANDOM_STATE)
+    experiment(x_train, y_train, x_test, y_test, clf, 'NN')
+
+    clf = KNeighborsClassifier(n_neighbors=5)
+    experiment(x_train, y_train, x_test, y_test, clf, 'KNN')
+
+    clf = SVC(kernel='rbf', C=4, random_state = RANDOM_STATE)
+    experiment(x_train, y_train, x_test, y_test, clf, 'SVM')
+
+
+def final_results_beta(x_train, y_train):
+    x_test, y_test = load_data('dataset2', 'test')
+
+    clf = DecisionTreeClassifier(random_state=RANDOM_STATE, max_depth=9, min_samples_leaf=10)
+    experiment(x_train, y_train, x_test, y_test, clf, 'DT')
+
+    dt = DecisionTreeClassifier(random_state=RANDOM_STATE, max_depth=9)
+    clf = AdaBoostClassifier(dt, random_state = RANDOM_STATE)
+    experiment(x_train, y_train, x_test, y_test, clf, 'Boost')
+
+    clf = MLPClassifier((50,50), max_iter=100, random_state = RANDOM_STATE)
+    experiment(x_train, y_train, x_test, y_test, clf, 'NN')
+
+    clf = KNeighborsClassifier(n_neighbors=25)
+    experiment(x_train, y_train, x_test, y_test, clf, 'KNN')
+
+    clf = SVC(kernel='rbf', C=19, random_state = RANDOM_STATE)
+    experiment(x_train, y_train, x_test, y_test, clf, 'SVM')
+
     
+if __name__ == "__main__":    
     # create_datasets()
-    features1, labels1 = load_data('dataset1')
-    # decision_tree_alpha(features1, labels1)
-    # knn_alpha(features1, labels1)
-    # svm_alpha(features1, labels1)
-    # neural_network_alpha(features1, labels1)
-    # boost_alpha(features1, labels1)
+    features1, labels1 = load_data('dataset1', 'train')
+    decision_tree_alpha(features1, labels1)
+    knn_alpha(features1, labels1)
+    svm_alpha(features1, labels1)
+    neural_network_alpha(features1, labels1)
+    boost_alpha(features1, labels1)
+    final_results_alpha(features1, labels1)
 
-    features2, labels2 = load_data('dataset2')
-    # decision_tree_beta(features2, labels2)
-    # knn_beta(features2, labels2)
-    # svm_beta(features2, labels2)
+    features2, labels2 = load_data('dataset2', 'train')
+    decision_tree_beta(features2, labels2)
+    knn_beta(features2, labels2)
+    svm_beta(features2, labels2)
     neural_network_beta(features2, labels2)
-    # boost_beta(features2, labels2)
+    boost_beta(features2, labels2)
+    final_results_beta(features2, labels2)
 
