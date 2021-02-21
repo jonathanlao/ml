@@ -11,4 +11,10 @@ conda env create -f environment.yml
 
 To run experiments:
 
-python assignment1/main.py
+Supervised Learning:
+cd assignment1
+python main.py
+
+Randomized Optimization:
+cd assignment2
+python main.py
