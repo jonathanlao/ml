@@ -95,7 +95,7 @@ def flip_flop():
     ga = []
     mim = []
 
-    input_sizes = [200]
+    input_sizes = [50]
 
     for i in input_sizes:
         state = np.array([np.random.randint(0, 2) for i in range(i)])
@@ -104,16 +104,16 @@ def flip_flop():
         fitness = mlr.FlipFlop()
         problem = mlr.DiscreteOpt(length = i, fitness_fn = fitness, maximize = True, max_val = 2)
 
-        best_state, best_fitness, fitness_curve, time = randomized_hill_climb(problem, state, 100, 1000)
+        best_state, best_fitness, fitness_curve, time = randomized_hill_climb(problem, state, 10, 1000)
         rhc.append((best_fitness, fitness_curve, time))
 
-        best_state, best_fitness, fitness_curve, time = simulated_annealing(problem, state, 100, 1000)
+        best_state, best_fitness, fitness_curve, time = simulated_annealing(problem, state, 10, 1000)
         sa.append((best_fitness, fitness_curve, time))
 
-        best_state, best_fitness, fitness_curve, time = genetic_algorithm(problem, state, 100, 1000)
+        best_state, best_fitness, fitness_curve, time = genetic_algorithm(problem, state, 10, 1000)
         ga.append((best_fitness, fitness_curve, time))
 
-        best_state, best_fitness, fitness_curve, time = mimic(problem, state, 100, 1000)
+        best_state, best_fitness, fitness_curve, time = mimic(problem, state, 10, 1000)
         mim.append((best_fitness, fitness_curve, time))
 
     plot_data([i+1 for i in range(len(rhc[0][1]))], rhc[0][1], 
@@ -168,8 +168,8 @@ def four_peaks():
 
 
     plot_data([i+1 for i in range(len(rhc[0][1]))], rhc[0][1], 
-    title="FourPeaks (Input Size = "+str(len(state))+")", 
-    x_label="Iterations", y_label="Fitness Score", color="blue", label='RHC')
+        title="FourPeaks (Input Size = "+str(len(state))+")", 
+        x_label="Iterations", y_label="Fitness Score", color="blue", label='RHC')
     
     plot_data([i+1 for i in range(len(sa[0][1]))], sa[0][1], 
         title="FourPeaks (Input Size = "+str(len(state))+")", 
@@ -377,8 +377,8 @@ def neural_network():
 
 
 if __name__ == "__main__":    
-    one_max()
-    four_peaks() 
+    # one_max()
+    # four_peaks() 
     flip_flop()
     # neural_network()
 
