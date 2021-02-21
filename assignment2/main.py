@@ -95,7 +95,7 @@ def flip_flop():
     ga = []
     mim = []
 
-    input_sizes = [50]
+    input_sizes = [100]
 
     for i in input_sizes:
         state = np.array([np.random.randint(0, 2) for i in range(i)])
@@ -117,19 +117,19 @@ def flip_flop():
         mim.append((best_fitness, fitness_curve, time))
 
     plot_data([i+1 for i in range(len(rhc[0][1]))], rhc[0][1], 
-    title="FourPeaks (Input Size = "+str(len(state))+")", 
+    title="Flip Flop (Input Size = "+str(len(state))+")", 
     x_label="Iterations", y_label="Fitness Score", color="blue", label='RHC')
     
     plot_data([i+1 for i in range(len(sa[0][1]))], sa[0][1], 
-        title="FourPeaks (Input Size = "+str(len(state))+")", 
+        title="Flip Flop (Input Size = "+str(len(state))+")", 
         x_label="Iterations", y_label="Fitness Score", color="orange", label='SA')
 
     plot_data([i+1 for i in range(len(ga[0][1]))], ga[0][1], 
-        title="FourPeaks (Input Size = "+str(len(state))+")", 
+        title="Flip Flop (Input Size = "+str(len(state))+")", 
         x_label="Iterations", y_label="Fitness Score", color="green", label='GA')
     
     plot_data([i+1 for i in range(len(mim[0][1]))], mim[0][1], 
-        title="OneMax (Input Size = "+str(len(state))+")", 
+        title="Flip Flop (Input Size = "+str(len(state))+")", 
         x_label="Iterations", y_label="Fitness Score", color="red", label='MIMIC')
 
 
@@ -180,7 +180,7 @@ def four_peaks():
         x_label="Iterations", y_label="Fitness Score", color="green", label='GA')
     
     plot_data([i+1 for i in range(len(mim[0][1]))], mim[0][1], 
-        title="OneMax (Input Size = "+str(len(state))+")", 
+        title="FourPeaks (Input Size = "+str(len(state))+")", 
         x_label="Iterations", y_label="Fitness Score", color="red", label='MIMIC')
 
 
@@ -300,6 +300,33 @@ def neural_network():
                                                         random_state=RANDOM_STATE)
 
 
+    algorithm = 'gradient_descent'
+    gd = mlr.NeuralNetwork(hidden_nodes = [10,10], activation = 'relu', \
+                                 algorithm = algorithm, max_iters=5000, \
+                                 bias = True, is_classifier = True, learning_rate = 0.001, \
+                                 early_stopping = False, clip_max = 1, max_attempts = 100, \
+                                 random_state = RANDOM_STATE, curve=True)
+    
+    
+    print('Backpropagation')
+    start_time = time.time() 
+    gd.fit(x_train, y_train)
+    end_time = time.time()
+    total_time = end_time - start_time
+    print("Fit Time", total_time)
+    
+    y_train_pred = gd.predict(x_train)
+    y_train_accuracy = accuracy_score(y_train, y_train_pred)
+    print('Train Score:', y_train_accuracy)
+    y_test_pred = gd.predict(x_test)
+    y_test_accuracy = accuracy_score(y_test, y_test_pred)
+    print('Validation Score:', y_test_accuracy)
+
+
+    plot_data([i+1 for i in range(len(gd.fitness_curve))], gd.fitness_curve*-1, 
+        title="Neural Network Fitness", 
+        x_label="Iterations", y_label="Log Loss", color="red", label='Backprop')
+
 
 
     algorithm = 'random_hill_climb'
@@ -311,10 +338,21 @@ def neural_network():
     
     
 
+    print('Random Hill Climbing')
+    start_time = time.time() 
     rhc.fit(x_train, y_train)
+    end_time = time.time()
+    total_time = end_time - start_time
+    print("Fit Time", total_time)
+
     y_train_pred = rhc.predict(x_train)
     y_train_accuracy = accuracy_score(y_train, y_train_pred)
-    print(y_train_accuracy)
+    
+    print('Train Score', y_train_accuracy)
+    y_test_pred = rhc.predict(x_test)
+    y_test_accuracy = accuracy_score(y_test, y_test_pred)
+    print('Validation Score:', y_test_accuracy)
+
     plot_data([i+1 for i in range(len(rhc.fitness_curve))], rhc.fitness_curve, 
         title="Neural Network Fitness", 
         x_label="Iterations", y_label="Log Loss", color="blue", label='RHC')
@@ -331,11 +369,20 @@ def neural_network():
                                  random_state = RANDOM_STATE, curve=True)
     
     
-
+    print('Simulated Annealing')
+    start_time = time.time() 
     sa.fit(x_train, y_train)
+    end_time = time.time()
+    total_time = end_time - start_time
+    print("Fit Time", total_time)
+
     y_train_pred = sa.predict(x_train)
     y_train_accuracy = accuracy_score(y_train, y_train_pred)
-    print(y_train_accuracy)
+    
+    print('Train Score', y_train_accuracy)
+    y_test_pred = sa.predict(x_test)
+    y_test_accuracy = accuracy_score(y_test, y_test_pred)
+    print('Validation Score:', y_test_accuracy)
 
     plot_data([i+1 for i in range(len(sa.fitness_curve))], sa.fitness_curve, 
         title="Neural Network Fitness", 
@@ -343,28 +390,35 @@ def neural_network():
 
 
 
-
-
-
-
-
     algorithm = 'genetic_alg'
     ga = mlr.NeuralNetwork(hidden_nodes = [10,10], activation = 'relu', \
-                                 algorithm = algorithm, max_iters=1000, \
+                                 algorithm = algorithm, max_iters=5000, \
                                  bias = True, is_classifier = True, learning_rate = 0.1, \
-                                 early_stopping = False, clip_max = 1, max_attempts = 50, \
+                                 early_stopping = False, clip_max = 1, max_attempts = 100, \
                                  random_state = RANDOM_STATE, curve=True)
     
     
-
+    print('Genetic Algorithms')
+    start_time = time.time() 
     ga.fit(x_train, y_train)
+    end_time = time.time()
+    total_time = end_time - start_time
+    print("Fit Time", total_time)
+
     y_train_pred = ga.predict(x_train)
     y_train_accuracy = accuracy_score(y_train, y_train_pred)
-    print(y_train_accuracy)
+    
+    print('Train Score', y_train_accuracy)
+    y_test_pred = ga.predict(x_test)
+    y_test_accuracy = accuracy_score(y_test, y_test_pred)
+    print('Validation Score:', y_test_accuracy)
 
     plot_data([i+1 for i in range(len(ga.fitness_curve))], ga.fitness_curve, 
         title="Neural Network Fitness", 
         x_label="Iterations", y_label="Log Loss", color="green", label='GA')
+
+
+
 
 
     plt.savefig('output/'+"Neural Network Fitness"+'.png')
@@ -376,11 +430,194 @@ def neural_network():
     #     (500,1000,1500,2000,2500,3000,3500,4000,4500,5000))
 
 
+def neural_network_tune_rhc():
+    features, labels = load_data('dataset1', 'train')
+    x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=0.2,
+                                                    random_state=RANDOM_STATE)
+
+    restarts = [10, 20, 30, 40, 50]
+    for i in restarts:
+        algorithm = 'random_hill_climb'
+        rhc = mlr.NeuralNetwork(hidden_nodes = [10,10], activation = 'relu', \
+                                    algorithm = algorithm, max_iters=5000, restarts=i, \
+                                    bias = True, is_classifier = True, learning_rate = 0.1, \
+                                    early_stopping = True, clip_max = 1, max_attempts = 100, \
+                                    random_state = RANDOM_STATE, curve=True)
+        
+        
+        print('Random Hill Climbing Restarts=', i)
+        start_time = time.time() 
+        rhc.fit(x_train, y_train)
+        end_time = time.time()
+        total_time = end_time - start_time
+        print("Fit Time", total_time)
+
+        y_train_pred = rhc.predict(x_train)
+        y_train_accuracy = accuracy_score(y_train, y_train_pred)
+        
+        print('Train Score', y_train_accuracy)
+        y_test_pred = rhc.predict(x_test)
+        y_test_accuracy = accuracy_score(y_test, y_test_pred)
+        print('Validation Score:', y_test_accuracy)
+
+
+
+def neural_network_tune_sa():
+    features, labels = load_data('dataset1', 'train')
+    x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=0.2,
+                                                    random_state=RANDOM_STATE)
+
+    decay = [
+        mlr.GeomDecay(init_temp=1.0, decay=0.99, min_temp=0.001),
+        mlr.GeomDecay(init_temp=1.0, decay=0.8, min_temp=0.001),
+        mlr.GeomDecay(init_temp=1.0, decay=0.6, min_temp=0.001),
+        mlr.GeomDecay(init_temp=1.0, decay=0.4, min_temp=0.001),
+        mlr.GeomDecay(init_temp=1.0, decay=0.2, min_temp=0.001)
+    ]
+
+    for i in decay:
+        algorithm = 'simulated_annealing'
+        sa = mlr.NeuralNetwork(hidden_nodes = [10,10], activation = 'relu', \
+                                    algorithm = algorithm, max_iters=5000, schedule=i, \
+                                    bias = True, is_classifier = True, learning_rate = 0.1, \
+                                    early_stopping = True, clip_max = 1, max_attempts = 100, \
+                                    random_state = RANDOM_STATE, curve=True)
+        
+        
+        print('Simulated Annealing Decay Rate=', i)
+        start_time = time.time() 
+        sa.fit(x_train, y_train)
+        end_time = time.time()
+        total_time = end_time - start_time
+        print("Fit Time", total_time)
+
+        y_train_pred = sa.predict(x_train)
+        y_train_accuracy = accuracy_score(y_train, y_train_pred)
+        
+        print('Train Score', y_train_accuracy)
+        y_test_pred = sa.predict(x_test)
+        y_test_accuracy = accuracy_score(y_test, y_test_pred)
+        print('Validation Score:', y_test_accuracy)
+
+
+def neural_network_tune_ga():
+    features, labels = load_data('dataset1', 'train')
+    x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=0.2,
+                                                    random_state=RANDOM_STATE)
+
+    population = [
+        50,
+        100,
+        200,
+        500,
+        1000
+    ]
+
+    for i in population:
+        algorithm = 'genetic_alg'
+        ga = mlr.NeuralNetwork(hidden_nodes = [10,10], activation = 'relu', \
+                                    algorithm = algorithm, max_iters=1000, pop_size = i,  \
+                                    bias = True, is_classifier = True, learning_rate = 0.1, \
+                                    early_stopping = True, clip_max = 1, max_attempts = 100, \
+                                    random_state = RANDOM_STATE, curve=True)
+        
+        
+        print('Genetic Algorithm Population Size =', i)
+        start_time = time.time() 
+        ga.fit(x_train, y_train)
+        end_time = time.time()
+        total_time = end_time - start_time
+        print("Fit Time", total_time)
+
+        y_train_pred = ga.predict(x_train)
+        y_train_accuracy = accuracy_score(y_train, y_train_pred)
+        
+        print('Train Score', y_train_accuracy)
+        y_test_pred = ga.predict(x_test)
+        y_test_accuracy = accuracy_score(y_test, y_test_pred)
+        print('Validation Score:', y_test_accuracy)
+
+
+
+def neural_network_final_results():
+    x_train, y_train = load_data('dataset1', 'train')
+    x_test, y_test = load_data('dataset1', 'test')
+
+    algorithm = 'random_hill_climb'
+    rhc = mlr.NeuralNetwork(hidden_nodes = [10,10], activation = 'relu', \
+                                 algorithm = algorithm, max_iters=5000, restarts=5, \
+                                 bias = True, is_classifier = True, learning_rate = 0.1, \
+                                 early_stopping = True, clip_max = 1, max_attempts = 100, \
+                                 random_state = RANDOM_STATE, curve=True)
+    
+    
+
+    print('Random Hill Climbing')
+    start_time = time.time() 
+    rhc.fit(x_train, y_train)
+    end_time = time.time()
+    total_time = end_time - start_time
+    print("Fit Time", total_time)
+
+    y_pred = rhc.predict(x_test)
+    test_accuracy = accuracy_score(y_test, y_pred)
+    print('Accuracy', test_accuracy)
+
+    
+    
+    algorithm = 'simulated_annealing'
+    sa = mlr.NeuralNetwork(hidden_nodes = [10,10], activation = 'relu', \
+                                 algorithm = algorithm, max_iters=5000, \
+                                 bias = True, is_classifier = True, learning_rate = 0.1, \
+                                 early_stopping = True, clip_max = 1, max_attempts = 100, \
+                                 random_state = RANDOM_STATE, curve=True)
+    
+    
+
+    print('Simulated Annealing')
+    start_time = time.time() 
+    sa.fit(x_train, y_train)
+    end_time = time.time()
+    total_time = end_time - start_time
+    print("Fit Time", total_time)
+
+    y_pred = sa.predict(x_test)
+    test_accuracy = accuracy_score(y_test, y_pred)
+    print('Accuracy', test_accuracy)
+
+    algorithm = 'genetic_alg'
+    ga = mlr.NeuralNetwork(hidden_nodes = [10,10], activation = 'relu', \
+                                 algorithm = algorithm, max_iters=1000, pop_size = 500, \
+                                 bias = True, is_classifier = True, learning_rate = 0.1, \
+                                 early_stopping = True, clip_max = 1, max_attempts = 100, \
+                                 random_state = RANDOM_STATE, curve=True)
+    
+    
+
+    print('Genetic Algorithm')
+    start_time = time.time() 
+    ga.fit(x_train, y_train)
+    end_time = time.time()
+    total_time = end_time - start_time
+    print("Fit Time", total_time)
+
+    y_pred = ga.predict(x_test)
+    test_accuracy = accuracy_score(y_test, y_pred)
+    print('Accuracy', test_accuracy)
+
+
+
+
+
 if __name__ == "__main__":    
-    # one_max()
-    # four_peaks() 
+    one_max()
+    four_peaks() 
     flip_flop()
-    # neural_network()
+    neural_network()
+    neural_network_tune_rhc()
+    neural_network_tune_sa()
+    neural_network_tune_ga()
+    neural_network_final_results()
 
     
 
