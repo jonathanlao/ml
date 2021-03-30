@@ -18,3 +18,7 @@ python main.py
 Randomized Optimization:
 cd assignment2
 python main.py
+
+Unsupervised Learning:
+cd assignment3
+python main.py
