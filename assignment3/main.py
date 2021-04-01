@@ -9,6 +9,9 @@ from sklearn.metrics.cluster import homogeneity_score
 from sklearn.mixture import GaussianMixture
 from sklearn.decomposition import PCA, FastICA
 from scipy.stats import kurtosis
+import time
+from sklearn.neural_network import MLPClassifier
+from sklearn.random_projection import GaussianRandomProjection
 
 RANDOM_STATE = 42
 ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -77,69 +80,120 @@ def kmeans_silhouette(points, kmax):
     return scores
 
 
+def experiment(x_train, y_train, x_test, y_test, clf, name):
+    start = time.time()
+    clf.fit(x_train, y_train)
+    end = time.time()
+    print(name,' Fit Time = ', end-start)
+    start = time.time()
+    pred = clf.predict(x_test)
+    end = time.time()
+    print(name, ' Predict Time = ', end-start)
+    final_score = clf.score(x_test, y_test)
+    print(name, ' Score', final_score)
+    
+    # matrix = confusion_matrix(y_test, pred)
+
+def step_four(x_train, y_train):
+    x_test, y_test = load_data('dataset1', 'test')
+    clf = MLPClassifier((110,110), max_iter=150, random_state = RANDOM_STATE)
+    experiment(x_train, y_train, x_test, y_test, clf, 'NN')
+
+    # for i in range(2,9):
+    #     print('Number of Components:', i)
+    #     ica = FastICA(n_components=i, random_state=RANDOM_STATE)
+    #     ica.fit(x_train)
+    #     ica_features = ica.transform(x_train)
+
+    #     ica_test = FastICA(n_components=i, random_state = RANDOM_STATE)
+    #     ica_test.fit(x_test)
+    #     ica_features_test = ica_test.transform(x_test)
+    #     experiment(ica_features, y_train, ica_features_test, y_test, clf, 'ICA #'+str(i))
+
+
+    # for i in range(2,9):
+    #     print('Number of Components:', i)
+    #     pca = PCA(n_components=i)
+    #     pca.fit(x_train)
+    #     pca_features = pca.transform(x_train)
+
+    #     pca_test = PCA(n_components=i, random_state = RANDOM_STATE)
+    #     pca_test.fit(x_test)
+    #     pca_features_test = pca_test.transform(x_test)
+    #     experiment(pca_features, y_train, pca_features_test, y_test, clf, 'PCA #'+str(i))
+
+
+
+
 if __name__ == "__main__":    
     features1, labels1 = load_data('dataset1', 'train')
     features2, labels2 = load_data('dataset2', 'train')
 
     kmax = 20
 
+    # step_four(features1, labels1)
 
 
 
 
-    # Step 2&3 PCA
-    pca = PCA()
-    pca.fit(features1)
-    print(np.around(pca.explained_variance_, decimals=7, out=None))
 
-    pca = PCA()
-    pca.fit(features2)
-    print(np.around(pca.explained_variance_, decimals=7, out=None))
+
+
+
+
+    # # Step 2&3 PCA
+    # pca = PCA()
+    # pca.fit(features1)
+    # print(np.around(pca.explained_variance_, decimals=7, out=None))
+
+    # pca = PCA()
+    # pca.fit(features2)
+    # print(np.around(pca.explained_variance_, decimals=7, out=None))
     
-    pca = PCA(n_components=6)
-    pca.fit(features1)
-    pca_features1 = pca.transform(features1)
-    df1 = pd.DataFrame(pca_features1)
-    df1["y"] = labels1
-    sns.pairplot(df1, vars=df1.columns[:-1], hue="y")
-    plt.savefig('output/alpha_pca_pairwise.png')
-    plt.close()
+    # pca = PCA(n_components=6)
+    # pca.fit(features1)
+    # pca_features1 = pca.transform(features1)
+    # df1 = pd.DataFrame(pca_features1)
+    # df1["y"] = labels1
+    # sns.pairplot(df1, vars=df1.columns[:-1], hue="y")
+    # plt.savefig('output/alpha_pca_pairwise.png')
+    # plt.close()
 
-    pca = PCA(n_components=4)
-    pca.fit(features2)
-    pca_features2 = pca.transform(features2)
-    df2 = pd.DataFrame(pca_features2)
-    df2["y"] = labels2
-    sns.pairplot(df2, vars=df2.columns[:-1], hue="y")
-    plt.savefig('output/beta_pca_pairwise.png')
-    plt.close()
+    # pca = PCA(n_components=4)
+    # pca.fit(features2)
+    # pca_features2 = pca.transform(features2)
+    # df2 = pd.DataFrame(pca_features2)
+    # df2["y"] = labels2
+    # sns.pairplot(df2, vars=df2.columns[:-1], hue="y")
+    # plt.savefig('output/beta_pca_pairwise.png')
+    # plt.close()
 
 
-    #K-Means PCA
-    elbows1 = kmeans_elbow(pca_features1, kmax)
-    plot(list(range(1,kmax+1)), elbows1, 'k', 'w/in cluster sum of squared error', 'Alpha - PCA K-Means', 'alpha_pca_elbow')
-    kmeans = KMeans(n_clusters = 5).fit(pca_features1)
-    pred_clusters = kmeans.predict(pca_features1)
-    print(homogeneity_score(labels1, pred_clusters))
+    # #K-Means PCA
+    # elbows1 = kmeans_elbow(pca_features1, kmax)
+    # plot(list(range(1,kmax+1)), elbows1, 'k', 'w/in cluster sum of squared error', 'Alpha - PCA K-Means', 'alpha_pca_elbow')
+    # kmeans = KMeans(n_clusters = 5).fit(pca_features1)
+    # pred_clusters = kmeans.predict(pca_features1)
+    # print(homogeneity_score(labels1, pred_clusters))
 
-    elbows2 = kmeans_elbow(pca_features2, kmax)
-    plot(list(range(1,kmax+1)), elbows2, 'k', 'w/in cluster sum of squared error', 'Alpha - PCA K-Means', 'beta_pca_elbow')
-    kmeans = KMeans(n_clusters = 5).fit(pca_features2)
-    pred_clusters = kmeans.predict(pca_features2)
-    print(homogeneity_score(labels2, pred_clusters))
+    # elbows2 = kmeans_elbow(pca_features2, kmax)
+    # plot(list(range(1,kmax+1)), elbows2, 'k', 'w/in cluster sum of squared error', 'Alpha - PCA K-Means', 'beta_pca_elbow')
+    # kmeans = KMeans(n_clusters = 5).fit(pca_features2)
+    # pred_clusters = kmeans.predict(pca_features2)
+    # print(homogeneity_score(labels2, pred_clusters))
 
-    # GMM PCA
-    bics1, sils1 = gmm(pca_features1, kmax)
-    bics2, sils2 = gmm(pca_features2, kmax)
-    plot(list(range(1,kmax+1)), bics1, 'num clusters', 'bayesian information criterion', 'Alpha - GMM', 'alpha_pca_bic')
-    plot(list(range(1,kmax+1)), bics2, 'num clusters', 'bayesian information criterion', 'Beta - GMM', 'beta_pca_bic')
+    # # GMM PCA
+    # bics1, sils1 = gmm(pca_features1, kmax)
+    # bics2, sils2 = gmm(pca_features2, kmax)
+    # plot(list(range(1,kmax+1)), bics1, 'num clusters', 'bayesian information criterion', 'Alpha - GMM', 'alpha_pca_bic')
+    # plot(list(range(1,kmax+1)), bics2, 'num clusters', 'bayesian information criterion', 'Beta - GMM', 'beta_pca_bic')
 
-    gmm = GaussianMixture(n_components=2, random_state=RANDOM_STATE).fit(pca_features1)
-    pred_clusters = gmm.predict(pca_features1)
-    print(homogeneity_score(labels1, pred_clusters))
-    gmm = GaussianMixture(n_components=4, random_state=RANDOM_STATE).fit(pca_features2)
-    pred_clusters = gmm.predict(pca_features2)
-    print(homogeneity_score(labels2, pred_clusters))
+    # gmm = GaussianMixture(n_components=2, random_state=RANDOM_STATE).fit(pca_features1)
+    # pred_clusters = gmm.predict(pca_features1)
+    # print(homogeneity_score(labels1, pred_clusters))
+    # gmm = GaussianMixture(n_components=4, random_state=RANDOM_STATE).fit(pca_features2)
+    # pred_clusters = gmm.predict(pca_features2)
+    # print(homogeneity_score(labels2, pred_clusters))
 
  
 
@@ -210,6 +264,87 @@ if __name__ == "__main__":
     # print(homogeneity_score(labels1, pred_clusters))
     # gmm = GaussianMixture(n_components=5, random_state=RANDOM_STATE).fit(ica_features2)
     # pred_clusters = gmm.predict(ica_features2)
+    # print(homogeneity_score(labels2, pred_clusters))
+
+
+    # # Step 2&3 RCA
+    # errs=[]
+    # for i in range(1,19):
+    #     err=[]
+    #     for j in range(10):
+    #         rca = GaussianRandomProjection(n_components=i, random_state=RANDOM_STATE)
+    #         rca.fit(features1)
+    #         rca_features = rca.transform(features1)
+
+    #         inverse_data = np.linalg.pinv(rca.components_.T)
+    #         reconstructed_data = rca_features.dot(inverse_data)
+
+    #         mse = (np.square(features1 - reconstructed_data)).mean(axis=None)
+    #         err.append(mse)
+    #     errs.append(np.around(np.mean(err), decimals=7))
+    #     # print('Num Components', i, np.mean(err))
+    # print(errs)
+
+    # errs=[]
+    # for i in range(1,9):
+    #     err=[]
+    #     for j in range(10):
+    #         rca = GaussianRandomProjection(n_components=i, random_state=RANDOM_STATE)
+    #         rca.fit(features2)
+    #         rca_features = rca.transform(features2)
+
+    #         inverse_data = np.linalg.pinv(rca.components_.T)
+    #         reconstructed_data = rca_features.dot(inverse_data)
+
+    #         mse = (np.square(features2 - reconstructed_data)).mean(axis=None)
+    #         err.append(mse)
+    #     errs.append(np.around(np.mean(err), decimals=7))
+    #     # print('Num Components', i, np.mean(err))
+    # print(errs)
+
+    # rca = GaussianRandomProjection(n_components=6, random_state=RANDOM_STATE)
+    # rca.fit(features1)
+    # rca_features1 = rca.transform(features1)
+    # df1 = pd.DataFrame(rca_features1)
+    # df1["y"] = labels1
+    # sns.pairplot(df1, vars=df1.columns[:-1], hue="y")
+    # plt.savefig('output/alpha_rca_pairwise.png')
+    # plt.close()
+
+    # rca = GaussianRandomProjection(n_components=4, random_state=RANDOM_STATE)
+    # rca.fit(features2)
+    # rca_features2 = rca.transform(features2)
+    # df2 = pd.DataFrame(rca_features2)
+    # df2["y"] = labels2
+    # sns.pairplot(df2, vars=df2.columns[:-1], hue="y")
+    # plt.savefig('output/beta_rca_pairwise.png')
+    # plt.close()
+
+
+    # #K-Means RCA
+    # elbows1 = kmeans_elbow(rca_features1, kmax)
+    # plot(list(range(1,kmax+1)), elbows1, 'k', 'w/in cluster sum of squared error', 'Alpha - RCA K-Means', 'alpha_rca_elbow')
+    # kmeans = KMeans(n_clusters = 4).fit(rca_features1)
+    # pred_clusters = kmeans.predict(rca_features1)
+    # print(homogeneity_score(labels1, pred_clusters))
+
+    # elbows2 = kmeans_elbow(rca_features2, kmax)
+    # plot(list(range(1,kmax+1)), elbows2, 'k', 'w/in cluster sum of squared error', 'Alpha - RCA K-Means', 'beta_rca_elbow')
+    # kmeans = KMeans(n_clusters = 4).fit(rca_features2)
+    # pred_clusters = kmeans.predict(rca_features2)
+    # print(homogeneity_score(labels2, pred_clusters))
+
+    # # GMM RCA
+    # bics1, sils1 = gmm(rca_features1, kmax)
+    # bics2, sils2 = gmm(rca_features2, kmax)
+    # plot(list(range(1,kmax+1)), bics1, 'num clusters', 'bayesian information criterion', 'Alpha - GMM', 'alpha_rca_bic')
+    # plot(list(range(1,kmax+1)), bics2, 'num clusters', 'bayesian information criterion', 'Beta - GMM', 'beta_rca_bic')
+
+    # gmm = GaussianMixture(n_components=3, random_state=RANDOM_STATE).fit(rca_features1)
+    # pred_clusters = gmm.predict(rca_features1)
+    # print(homogeneity_score(labels1, pred_clusters))
+    # gmm = GaussianMixture(n_components=4, random_state=RANDOM_STATE).fit(rca_features2)
+    # pred_clusters = gmm.predict(rca_features2)
     # print(homogeneity_score(labels2, pred_clusters))
 
 
