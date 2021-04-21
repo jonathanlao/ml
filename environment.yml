@@ -16,3 +16,4 @@ dependencies:
     - mlrose-hiive
     - seaborn
     - mdptoolbox-hiive
+    - gym

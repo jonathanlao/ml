@@ -22,3 +22,7 @@ python main.py
 Unsupervised Learning:
 cd assignment3
 python main.py
+
+Markov Decision Processes:
+cd assignment4
+python main.py
